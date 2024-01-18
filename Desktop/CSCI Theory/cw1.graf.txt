@@ -1,0 +1,43 @@
+_> CSCI 2670 - Classwork 1
+
+__ <!> Instructions
+> |> Create a \graf document with your answers to the following problems.  Save your work as a Grafstate file with the extension **{.graf.txt} and upload it to eLC.
+> |> You may work in small groups.  List in your document *{all} of the students in your group.
+> |> Look at your file when you save it and *{before} submitting it to eLC to make sure it is what you intend to submit.  Check eLC *{after} submitting your file to make sure the correct file was uploaded.  It is your responsibility to submit the correct file.
+
+__ @{task} Exercises
+
+(1) For each of the @fllwng @prptns, construct an @eqnt @prptn that uses !{only the 3 native operators} (AND, OR, and NOT).
+> [a] p \!^ (q (+) r)
+> [b] p <- (q (+) r)
+> [c] (p \!v q) -> \!(p \^ q)
+> [d] \!(p <-> q)
+//
+
+(2) Rewrite each of the @fllwng statements as an @eqnt statement that !{does not use any negated quantifiers}:
+> [a] \!\Ax \Ey P(x,y)
+> [b] \!\Ay \Ex P(x,y)
+> [c] \!\Ex \Ay P(x,y)
+> [d] \!\Ey \Ax P(x,y)
+//
+
+(3) Let f:A->B and g:B->C be @surjtv @fns.  Prove that g\@f:A->C is a @surjtv @fn.
+//
+
+(4) Let A={a,b,c} and B={a,c,e} be sets.  Evaluate the @fllwng:
+> [1] A \u B
+> [2] A \n B
+> [3] A - B
+> [4] B - A
+> [5] A \D B
+> [6] A \* B
+> [7] \P(A)
+//
+
+(5) Consider the @fllwng @rcdef of the @fn f:
+> @{base} Base step: f(0)=4.
+> @{loop} @Rcsv step: \An>0 [f(n) = 2n \. f(n-1)].
+//
+
+> Compute f(4).  Show all of your steps.
+
