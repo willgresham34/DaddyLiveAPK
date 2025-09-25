@@ -1,5 +1,8 @@
 name: Android Signed APK
 
+permissions:
+  contents: write
+
 on:
   push:
     tags: ["v*"]   # e.g. push tag v1.0.0
