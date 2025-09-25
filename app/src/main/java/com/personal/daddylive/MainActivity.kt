@@ -4,31 +4,35 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.input.key.type
-import androidx.tv.foundation.ExperimentalTvFoundationApi
-import androidx.tv.foundation.lazy.grid.TvGridCells
-import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
-import androidx.tv.foundation.lazy.grid.items
 import com.personal.daddylive.model.VideoOption
 
 class MainActivity : ComponentActivity() {
@@ -42,52 +46,30 @@ class MainActivity : ComponentActivity() {
         VideoOption("Fox Sports 2", 40)
     )
 
-    @OptIn(ExperimentalTvFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
                 Box(Modifier.fillMaxSize().padding(24.dp)) {
-                    TvLazyVerticalGrid(
-                        columns = TvGridCells.Fixed(3),
-                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(options.size) { index ->
                             val opt = options[index]
-
-                            var focused by remember { mutableStateOf(false) }
-                            val focusRequester = remember { FocusRequester() }
-
-                            // Auto-focus the very first item once
-                            LaunchedEffect(Unit) {
-                                if (index == 0) focusRequester.requestFocus()
-                            }
-
-                            Card(
-                                elevation = CardDefaults.cardElevation(if (focused) 10.dp else 2.dp),
-                                modifier = Modifier
-                                    .size(width = 280.dp, height = 160.dp)
-                                    .focusRequester(focusRequester)
-                                    .onFocusChanged { focused = it.isFocused }
-                                    .focusableForTv()
-                                    .tvClickable {
-                                        startActivity(
-                                            Intent(this@MainActivity, PlayerActivity::class.java)
-                                                .putExtra(PlayerActivity.EXTRA_TITLE, opt.title)
-                                                .putExtra(PlayerActivity.EXTRA_STREAM_ID, opt.streamId)
-                                        )
-                                    }
-                            ) {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = opt.title,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        textAlign = TextAlign.Center
+                            FocusableCard(
+                                title = opt.title,
+                                autoFocus = index == 0,
+                                onClick = {
+                                    startActivity(
+                                        Intent(this@MainActivity, PlayerActivity::class.java)
+                                            .putExtra(PlayerActivity.EXTRA_TITLE, opt.title)
+                                            .putExtra(PlayerActivity.EXTRA_STREAM_ID, opt.streamId)
                                     )
                                 }
-                            }
+                            )
                         }
                     }
                 }
@@ -96,12 +78,60 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/**
- * Make a composable act like a TV button:
- * - DPAD_CENTER / ENTER triggers onClick (via onPreviewKeyEvent)
- * - Clickable without ripple, with Button role for accessibility.
- */
-fun Modifier.tvClickable(onClick: () -> Unit) = composed {
+/** A TV-friendly card that visibly reacts to focus (scale, ring, shadow) */
+@Composable
+private fun FocusableCard(
+    title: String,
+    onClick: () -> Unit,
+    autoFocus: Boolean = false,
+    width: Dp = 280.dp,
+    height: Dp = 160.dp
+) {
+    var focused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(autoFocus) { if (autoFocus) focusRequester.requestFocus() }
+
+    val scale by animateFloatAsState(if (focused) 1f else .9f, label = "focus-scale")
+    val ringThickness = if (focused) 3.dp else 0.dp
+    val ringColor = if (focused) MaterialTheme.colorScheme.primary else Color.Transparent
+    val elevation = if (focused) 16.dp else 2.dp
+    val containerColor =
+        if (focused) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surfaceVariant
+
+    val shape = RoundedCornerShape(16.dp)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        modifier = Modifier
+            .size(width = width, height = height)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .shadow(elevation, shape, clip = false)
+            .border(ringThickness, ringColor, shape)
+            .clip(shape)
+            .focusRequester(focusRequester)
+            .onFocusChanged { focused = it.isFocused }
+            .tvClickable(onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // we use shadow() above
+    ) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .basicMarquee(iterations = Int.MAX_VALUE) // scrolling label when long
+            )
+        }
+    }
+}
+
+/** DPAD_CENTER/ENTER trigger clicks; no ripple; behaves like a TV button */
+private fun Modifier.tvClickable(onClick: () -> Unit) = composed {
     val interactions = remember { MutableInteractionSource() }
     this
         .onPreviewKeyEvent { ev ->
@@ -124,12 +154,3 @@ fun Modifier.tvClickable(onClick: () -> Unit) = composed {
             onClick = onClick
         )
 }
-
-/**
- * Helper to mark an element focusable for TV without adding extra behavior.
- * (Keeps it explicit and readable next to tvClickable/focusRequester.)
- */
-@Composable
-fun Modifier.focusableForTv(): Modifier = this.then(
-    androidx.compose.ui.Modifier // placeholder to keep the name clear; focusability comes from Card + tvClickable
-)
