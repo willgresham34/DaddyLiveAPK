@@ -43,7 +43,8 @@ class MainActivity : ComponentActivity() {
         VideoOption("ESPN 3", 46),
         VideoOption("SEC", 385),
         VideoOption("Fox Sports", 39),
-        VideoOption("Fox Sports 2", 40)
+        VideoOption("Fox Sports 2", 40),
+        VideoOption("UFC", 86)
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
